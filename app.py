@@ -60,7 +60,7 @@ def get_personal_days_tool(login: str) -> PersonalDayItem:
     Returns:
         Список персональных дней с датами, причинами и статусом использования
     """
-    data = get_personal_days(login=login)
+    data = get_personal_days(login="ivanov")
     items = PersonalDayItem(**data)
     return items
 
@@ -75,7 +75,7 @@ def get_remaining_vacation_days_tool(login: str) -> GetRemainingVacationDaysOutp
     Returns:
         Информация об отпуске: всего дней, использовано, осталось, запланировано
     """
-    data = get_remaining_vacation_days(login=login)
+    data = get_remaining_vacation_days(login="ivanov")
     items = [VacationDaysRecord(**item) for item in data]
     return GetRemainingVacationDaysOutput(items=items)
 
@@ -90,7 +90,7 @@ def get_plan_vacation_tool(login: str) -> GetRemainingVacationDatesOutput:
     Returns:
         Информация об отпуске: график запланированных отпусков
     """
-    data = get_plan_vacation(login=login)
+    data = get_plan_vacation(login="ivanov")
     items = [VacationDatesRecord(**item) for item in data]
     return GetRemainingVacationDatesOutput(items=items)
 
