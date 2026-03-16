@@ -2,6 +2,9 @@ import os
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
+
+MCP_PORT = int(os.getenv("MCP_PORT", "8050"))
+
 from tools.zup_1c import (
     get_personal_days, 
     get_remaining_vacation_days,
@@ -21,6 +24,8 @@ from runtime.models import (
 mcp = FastMCP(
     name="HR MCP Server",
     json_response=True,
+    host="0.0.0.0",
+    port=MCP_PORT,
 )
 
 
@@ -98,11 +103,10 @@ def main():
     """Точка входа для запуска сервера."""    
 
     app = mcp.streamable_http_app()
-    mcp_port = os.getenv("MCP_PORT", 8050)
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=int(mcp_port),
+        port=MCP_PORT,
         ws="none",  # только HTTP
         log_level="info",
     )
