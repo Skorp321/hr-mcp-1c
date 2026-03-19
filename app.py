@@ -1,7 +1,9 @@
 import os
+import logging
 import uvicorn
 from mcp.server.fastmcp import FastMCP
 
+logger = logging.getLogger(__name__)
 
 MCP_PORT = int(os.getenv("MCP_PORT", "8050"))
 
@@ -100,12 +102,33 @@ def get_plan_vacation_tool(login: str) -> GetRemainingVacationDatesOutput:
     return GetRemainingVacationDatesOutput(items=items)
 
 def main():
-    """Точка входа для запуска сервера."""    
+    """Точка входа для запуска сервера."""
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.requests import Request as StarletteRequest
+
+    class TraceContextMiddleware(BaseHTTPMiddleware):
+        """Извлекает W3C traceparent из входящего MCP-запроса и устанавливает
+        его как текущий OTel контекст, чтобы исходящий requests-вызов к
+        /api/similarity автоматически нёс тот же traceparent."""
+
+        async def dispatch(self, request: StarletteRequest, call_next):
+            try:
+                from opentelemetry.propagate import extract
+                from opentelemetry import context as otel_context
+                ctx = extract(dict(request.headers))
+                token = otel_context.attach(ctx)
+                try:
+                    return await call_next(request)
+                finally:
+                    otel_context.detach(token)
+            except Exception:
+                return await call_next(request)
 
     app = mcp.streamable_http_app()
+    app.add_middleware(TraceContextMiddleware)
     uvicorn.run(
-        app, 
-        host="0.0.0.0", 
+        app,
+        host="0.0.0.0",
         port=MCP_PORT,
         ws="none",  # только HTTP
         log_level="info",

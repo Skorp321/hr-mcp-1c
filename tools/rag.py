@@ -27,7 +27,15 @@ def rag_search(query: str, n_results: int = 5) -> list[dict]:
     try:
         url = f"{_HR_AGENT_URL}/api/similarity"
         payload = {"query": query, "top_k": n_results}
-        response = requests.post(url, json=payload, timeout=30)
+        # Пробрасываем W3C traceparent из текущего OTel контекста (установленного
+        # TraceContextMiddleware) в заголовки запроса — без создания лишних spans.
+        headers: dict[str, str] = {}
+        try:
+            from opentelemetry.propagate import inject as otel_inject
+            otel_inject(headers)
+        except Exception:
+            pass
+        response = requests.post(url, json=payload, timeout=30, headers=headers)
         response.raise_for_status()
         data = response.json()
         return [
