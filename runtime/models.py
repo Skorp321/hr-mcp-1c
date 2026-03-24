@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Generic, Optional, TypeVar
+
 from pydantic import BaseModel, Field
 
-# --- Выходные схемы ---
+
 class RagDocumentResult(BaseModel):
     """Один документ в результатах RAG-поиска."""
 
@@ -19,61 +20,48 @@ class HrRagSearchOutput(BaseModel):
         description="Найденные документы",
     )
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+
 class PersonalDayItem(BaseModel):
-    """Один персональный день."""
+    """Информация о персональных днях сотрудника."""
 
-    fio: str = Field(..., description="ФИО сотрудника чьи персональные дни.")
+    fio: str = Field(..., description="ФИО сотрудника")
     RemainsPersonalDays: int = Field(..., description="Остаток персональных дней")
-    FuturePersonalDays: str = Field(..., description="Даты когда заплонированы персональные дни")
-
-
-class EmployeePersonalDays(BaseModel):
-    """Персональные дни сотрудника."""
-
-    fio: str = Field(..., description="ФИО")
-    RemainsPersonalDays: str = Field(..., description="Дата начала")
-    FuturePersonalDays : str = Field(..., description="Дата окончания")
-
-
-class GetPersonalDaysOutput(BaseModel):
-    """Результат получения персональных дней."""
-
-    items: list[EmployeePersonalDays] = Field(
-        default_factory=list,
-        description="Запланированные даты отпуска по сотрудникам",
-    )
+    FuturePersonalDays: str = Field(..., description="Запланированные персональные дни")
 
 
 class VacationDaysRecord(BaseModel):
-    """Запись об отпуске сотрудника."""
+    """Запись об остатках отпуска сотрудника."""
+
     FIO: str = Field(..., description="ФИО")
     TypeVacation: str = Field(..., description="Тип отпуска")
-    RemainsVacation: float = Field(..., ge=0, description="Всего дней отпуска")
+    RemainsVacation: float = Field(..., ge=0, description="Остаток дней отпуска")
+
 
 class VacationDatesRecord(BaseModel):
-    """Запись об отпуске сотрудника."""
+    """Запись о запланированном отпуске сотрудника."""
+
     FIO: str = Field(..., description="ФИО")
     TypeVacation: str = Field(..., description="Тип отпуска")
     StartDate: str = Field(..., description="Дата начала запланированного отпуска")
-    EndDate: str = Field(..., description="Дата конца запланированного отпуска")
-    
+    EndDate: str = Field(..., description="Дата окончания запланированного отпуска")
 
-class GetRemainingVacationDaysOutput(BaseModel):
-    """Результат получения оставшихся дней отпуска."""
 
-    items: list[VacationDaysRecord] = Field(
-        default_factory=list,
-        description="Данные по отпуску",
+T = TypeVar("T")
+
+
+class ToolResponse(BaseModel, Generic[T]):
+    """Унифицированный ответ MCP-инструмента."""
+
+    status: str = Field(
+        ...,
+        description="Статус результата: ok, not_found, no_data или system_error",
+    )
+    message: str = Field(..., description="Краткое пояснение результата")
+    data: Optional[T] = Field(
+        default=None,
+        description="Полезная нагрузка инструмента, если она есть",
     )
 
-class GetRemainingVacationDatesOutput(BaseModel):
-    """Результат получения оставшихся дней отпуска."""
-
-    items: list[VacationDatesRecord] = Field(
-        default_factory=list,
-        description="Данные по отпуску",
-    )
 
 class ValidationErrorOutput(BaseModel):
     """Ошибка валидации."""
